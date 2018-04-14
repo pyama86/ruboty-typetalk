@@ -13,6 +13,9 @@ gem 'ruboty-typetalk'
 - `TYPETALK_CLIENT_SECRET`: client secret key
 - `TYPETALK_BOT_NAME`: your bot name
 
+## Special thanks
+I refer to [ruboty-slack_rtm](https://github.com/rosylilly/ruboty-slack_rtm) for many codes
+
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
