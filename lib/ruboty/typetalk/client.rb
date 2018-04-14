@@ -75,7 +75,7 @@ module Ruboty
         JSON.parse(res.body)
       end
 
-      def get(path, params={})
+      def get(path, params = {})
         res = conn.get(path) do |req|
           req.body = params.to_json
           req.headers['Content-Type'] = 'application/json'
@@ -88,22 +88,21 @@ module Ruboty
       private
 
       def conn
-        @_conn = Faraday.new(:url => 'https://typetalk.com') do |faraday|
+        @_conn = Faraday.new(url: 'https://typetalk.com') do |faraday|
           faraday.request  :url_encoded
           faraday.adapter  Faraday.default_adapter
         end
       end
 
-
       def token
-        if !@_access_token || @_access_token[:expired_at] < Time.now
+        if !@_access_token || (@_access_token[:expired_at] && @_access_token[:expired_at] < Time.now)
           @_acc
-          response = conn.post("/oauth2/access_token", {client_id: ENV['TYPETALK_CLIENT_ID'],
-                                           client_secret: ENV['TYPETALK_CLIENT_SECRET'],
-                                           grant_type: 'client_credentials',
-                                           scope: 'my,topic.read,topic.post'})
+          response = conn.post('/oauth2/access_token', client_id: ENV['TYPETALK_CLIENT_ID'],
+                                                       client_secret: ENV['TYPETALK_CLIENT_SECRET'],
+                                                       grant_type: 'client_credentials',
+                                                       scope: 'my,topic.read,topic.post')
           body = JSON.parse(response.body)
-          @_access_token = { token: body['access_token'], expierd_at: Time.now + body['expires_in'] }
+          @_access_token = { token: body['access_token'], expired_at: Time.now + body['expires_in'] }
         end
         @_access_token[:token]
       end

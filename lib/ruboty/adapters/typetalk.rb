@@ -31,11 +31,16 @@ module Ruboty
     class TypeTalk < Base
       env :TYPETALK_CLIENT_ID, 'ClientID. get one on https://developer.nulab-inc.com/ja/docs/typetalk/'
       env :TYPETALK_CLIENT_SECRET, 'client secret key'
+      env :TYPETALK_BOT_NAME, 'your bot name'
 
       def run
         init
         bind
         connect
+      end
+
+      def init
+        ENV['RUBOTY_NAME'] = ENV['TYPETALK_BOT_NAME']
       end
 
       def say(message)
@@ -56,17 +61,15 @@ module Ruboty
 
       def channel_info
         @_channel_info ||= begin
-                             body = client.get("api/v1/topics")
+                             body = client.get('api/v1/topics')
                              body['topics'].map do |t|
                                { id: t['topic']['id'], name: t['topic']['name'] }
                              end
                            end
       end
 
-      def init; end
-
       def bind
-        realtime.on_text do |data|
+        client.on_text do |data|
           method_name = "on_#{data['type'].downcase}".to_sym
           send(method_name, data['data']) if respond_to?(method_name, true)
         end
@@ -82,17 +85,17 @@ module Ruboty
 
         loop do
           begin
-            realtime.main_loop
+            client.main_loop
           rescue StandardError
             nil
           end
-          @realtime = nil
+          client(true)
         end
       end
 
-
-      def realtime
-        @realtime ||= ::Ruboty::TypeTalk::Client.new(websocket_url: 'https://typetalk.com/api/v1/streaming')
+      def client(renew = nil)
+        @_client = ::Ruboty::TypeTalk::Client.new(websocket_url: 'https://typetalk.com/api/v1/streaming') if !@_client || renew
+        @_client
       end
 
       # event handlers
@@ -104,13 +107,19 @@ module Ruboty
           time: Time.at(data['post']['createdAt'].to_f)
         }
 
-        body = data['post']['message']
+        body = remove_mention(data['post']['message'])
         mention_to = begin
-                       data['post']['mention'].map { |m| m['name'] }
+                       data['mentions'].map { |m| m['name'] }
                      rescue StandardError
                        []
                      end
         robot.receive(message_info.merge(body: body, mention_to: mention_to))
+      end
+
+      def remove_mention(text)
+        (text || '').gsub(/\<\@(?<uid>[0-9A-Z]+)(?:\|(?<name>[^>]+))?\>/) do |_|
+          "@#{Regexp.last_match[:name]}"
+        end
       end
     end
   end
