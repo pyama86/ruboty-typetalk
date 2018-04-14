@@ -45,16 +45,7 @@ module Ruboty
         m = {
           message: message[:code] ? "```\n#{message[:body]}\n```" : message[:body]
         }
-        uri = URI.parse("https://typetalk.com/api/v1/topics/#{channel}")
-        uri.inspect
-        http = Net::HTTP.new(uri.host, uri.port)
-        http.use_ssl = true
-        req = Net::HTTP::Post.new(uri.request_uri, Authorization: "Bearer #{token}")
-        req['Content-Type'] = 'application/json'
-        req.body = m.to_json
-        response = http.start do
-          http.request(req)
-        end
+        client.post("/api/v1/topics/#{channel}", m)
       end
 
       private
@@ -65,19 +56,12 @@ module Ruboty
 
       def channel_info
         @_channel_info ||= begin
-          uri = URI.parse('https://typetalk.com/api/v1/topics')
-          http = Net::HTTP.new(uri.host, uri.port)
-          http.use_ssl = true
-          req = Net::HTTP::Get.new(uri.request_uri, Authorization: "Bearer #{token}")
-          response = http.start do
-            http.request(req)
-          end
-          body = JSON.parse(response.body)
-          body['topics'].map do |t|
-            { id: t['topic']['id'], name: t['topic']['name'] }
-          end
-        end
-    end
+                             body = client.get("api/v1/topics")
+                             body['topics'].map do |t|
+                               { id: t['topic']['id'], name: t['topic']['name'] }
+                             end
+                           end
+      end
 
       def init; end
 
@@ -106,20 +90,9 @@ module Ruboty
         end
       end
 
-      def token
-        @_access_token ||= begin
-                             response = ::Net::HTTP.post_form(URI.parse('https://typetalk.com/oauth2/access_token'),
-                                                              client_id: ENV['TYPETALK_CLIENT_ID'],
-                                                              client_secret: ENV['TYPETALK_CLIENT_SECRET'],
-                                                              grant_type: 'client_credentials',
-                                                              scope: 'my,topic.read,topic.post')
-                             body = JSON.parse(response.body)
-                             body['access_token']
-                           end
-      end
 
       def realtime
-        @realtime ||= ::Ruboty::TypeTalk::Client.new(websocket_url: 'https://typetalk.com/api/v1/streaming', token: token)
+        @realtime ||= ::Ruboty::TypeTalk::Client.new(websocket_url: 'https://typetalk.com/api/v1/streaming')
       end
 
       # event handlers

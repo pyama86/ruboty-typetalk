@@ -29,9 +29,9 @@ module Ruboty
     class Client
       CONNECTION_CLOSED = Object.new
 
-      def initialize(websocket_url:, token:)
+      def initialize(websocket_url:)
         @queue = Queue.new
-        @client = create_client(websocket_url.to_s, token)
+        @stream_client ||= build_stream_client(websocket_url.to_s)
       end
 
       def send_message(data)
@@ -40,7 +40,7 @@ module Ruboty
       end
 
       def on_text
-        @client.on(:message) do |message|
+        @stream_client.on(:message) do |message|
           case message.type
           when :ping
             Ruboty.logger.debug("#{Client.name}: Received ping message")
@@ -61,13 +61,54 @@ module Ruboty
         loop do
           message = @queue.deq
           break if message.equal?(CONNECTION_CLOSED)
-          @client.send(message)
+          @stream_client.send(message)
         end
+      end
+
+      def post(path, params)
+        res = conn.post(path) do |req|
+          req.body = params.to_json
+          req.headers['Content-Type'] = 'application/json'
+          req.headers['Authorization'] = "Bearer #{token}"
+        end
+
+        JSON.parse(res.body)
+      end
+
+      def get(path, params={})
+        res = conn.get(path) do |req|
+          req.body = params.to_json
+          req.headers['Content-Type'] = 'application/json'
+          req.headers['Authorization'] = "Bearer #{token}"
+        end
+
+        JSON.parse(res.body)
       end
 
       private
 
-      def create_client(url, token)
+      def conn
+        @_conn = Faraday.new(:url => 'https://typetalk.com') do |faraday|
+          faraday.request  :url_encoded
+          faraday.adapter  Faraday.default_adapter
+        end
+      end
+
+
+      def token
+        if !@_access_token || @_access_token[:expired_at] < Time.now
+          @_acc
+          response = conn.post("/oauth2/access_token", {client_id: ENV['TYPETALK_CLIENT_ID'],
+                                           client_secret: ENV['TYPETALK_CLIENT_SECRET'],
+                                           grant_type: 'client_credentials',
+                                           scope: 'my,topic.read,topic.post'})
+          body = JSON.parse(response.body)
+          @_access_token = { token: body['access_token'], expierd_at: Time.now + body['expires_in'] }
+        end
+        @_access_token[:token]
+      end
+
+      def build_stream_client(url)
         WebSocket::Client::Simple.connect(url, verify_mode: OpenSSL::SSL::VERIFY_PEER, headers: { Authorization: "Bearer #{token}" }).tap do |client|
           client.on(:error) do |err|
             Ruboty.logger.error("#{err.class}: #{err.message}\n#{err.backtrace.join("\n")}")
