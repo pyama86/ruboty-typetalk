@@ -1,28 +1,17 @@
 # Ruboty::Typetalk
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/ruboty/typetalk`. To experiment with that code, run `bin/console` for an interactive prompt.
-
-TODO: Delete this and the text above, and describe your gem
+It is [ruboty's](https://github.com/r7kamura/ruboty)  typetalk adapter
 
 ## Installation
-
-Add this line to your application's Gemfile:
 
 ```ruby
 gem 'ruboty-typetalk'
 ```
 
-And then execute:
-
-    $ bundle
-
-Or install it yourself as:
-
-    $ gem install ruboty-typetalk
-
-## Usage
-
-TODO: Write usage instructions here
+## ENV
+- `TYPETALK_CLIENT_ID`: 'client id. get one on https://developer.nulab-inc.com/ja/docs/typetalk/
+- `TYPETALK_CLIENT_SECRET`: client secret key
+- `TYPETALK_BOT_NAME`: your bot name
 
 ## Development
 
