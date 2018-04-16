@@ -66,23 +66,11 @@ module Ruboty
       end
 
       def post(path, params)
-        res = conn.post(path) do |req|
-          req.body = params.to_json
-          req.headers['Content-Type'] = 'application/json'
-          req.headers['Authorization'] = "Bearer #{token}"
-        end
-
-        JSON.parse(res.body)
+        request("post", path, params)
       end
 
       def get(path, params = {})
-        res = conn.get(path) do |req|
-          req.body = params.to_json
-          req.headers['Content-Type'] = 'application/json'
-          req.headers['Authorization'] = "Bearer #{token}"
-        end
-
-        JSON.parse(res.body)
+        request("get", path, params)
       end
 
       private
@@ -92,6 +80,16 @@ module Ruboty
           faraday.request  :url_encoded
           faraday.adapter  Faraday.default_adapter
         end
+      end
+
+      def request(method, path, params)
+        res = conn.send(method, path) do |req|
+          req.body = params.to_json
+          req.headers['Content-Type'] = 'application/json'
+          req.headers['Authorization'] = "Bearer #{token}"
+        end
+
+        JSON.parse(res.body)
       end
 
       def token
