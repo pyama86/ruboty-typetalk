@@ -31,6 +31,7 @@ module Ruboty
     class TypeTalk < Base
       env :TYPETALK_CLIENT_ID, 'ClientID. get one on https://developer.nulab-inc.com/ja/docs/typetalk/'
       env :TYPETALK_CLIENT_SECRET, 'client secret key'
+      env :TYPETALK_SPACE_NAME, 'your space name(Please set dummy value when not belonging to organization)'
       env :TYPETALK_BOT_NAME, 'your bot name'
 
       def run
@@ -59,11 +60,26 @@ module Ruboty
         channel_info.find { |c| c[:name] == name }[:id]
       end
 
+      def resolve_space_id
+        space_info.find {|s| s[:name] == ENV['TYPETALK_SPACE_NAME'] }[:id] rescue nil
+      end
+
       def channel_info
         @_channel_info ||= begin
-                             body = client.get('api/v1/topics')
+                             params = resolve_space_id ? { spaceKey: resolve_space_id } : nil
+
+                             body = client.get('api/v2/topics', params)
                              body['topics'].map do |t|
                                { id: t['topic']['id'], name: t['topic']['name'] }
+                             end
+                           end
+      end
+
+      def space_info
+        @_space_info ||= begin
+                             body = client.get('api/v1/spaces')
+                             body['mySpaces'].map do |t|
+                               { id: t['space']['key'], name: t['space']['name'] }
                              end
                            end
       end

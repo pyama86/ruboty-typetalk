@@ -11,6 +11,7 @@ gem 'ruboty-typetalk'
 ## ENV
 - `TYPETALK_CLIENT_ID`: 'client id. get one on https://developer.nulab-inc.com/ja/docs/typetalk/
 - `TYPETALK_CLIENT_SECRET`: client secret key
+- `TYPETALK_SPACE_NAME`: your space name(Please set dummy value when not belonging to organization)
 - `TYPETALK_BOT_NAME`: your bot name
 
 ## Special thanks

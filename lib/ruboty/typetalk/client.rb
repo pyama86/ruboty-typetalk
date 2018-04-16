@@ -66,6 +66,13 @@ module Ruboty
       end
 
       def post(path, params)
+        res = conn.post(path) do |req|
+          req.body = params.to_json
+          req.headers['Content-Type'] = 'application/json'
+          req.headers['Authorization'] = "Bearer #{token}"
+        end
+
+        JSON.parse(res.body)
         request("post", path, params)
       end
 
@@ -83,7 +90,7 @@ module Ruboty
       end
 
       def request(method, path, params)
-        res = conn.send(method, path) do |req|
+        res = conn.send(method, path, params) do |req|
           req.body = params.to_json
           req.headers['Content-Type'] = 'application/json'
           req.headers['Authorization'] = "Bearer #{token}"
